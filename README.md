@@ -65,7 +65,9 @@ workshop/
 Full documentation: [docs/architecture.md](docs/architecture.md) (the
 moving parts and WHY they exist) and [docs/way-of-working.md]
 (docs/way-of-working.md) (the operating guide: starting, daily rhythm,
-incremental mode, window hygiene).
+incremental mode, window hygiene). Deep cuts: [docs/lessons/]
+(docs/lessons/) - the original studies behind the core ideas (SKILL.state
+review, relation-graph concept, autonomous-agents study).
 
 ```powershell
 git clone <this repo> my-workspace

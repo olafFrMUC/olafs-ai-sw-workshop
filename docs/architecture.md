@@ -143,3 +143,10 @@ strongest model is the same waste in the other direction (measured:
 GUARD halts with budget caps, receipts as the done definition, a watchdog
 script instead of any polling agent. The owner's machine may go off; the
 work continues, auditable afterwards.
+
+---
+
+**Further reading:** [docs/lessons/](lessons/) holds the original studies
+these mechanisms were distilled from (the SKILL.state review, the
+relation-graph concept, the autonomous-agents study) - including the
+numbers that justified them.
