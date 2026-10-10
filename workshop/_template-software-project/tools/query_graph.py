@@ -7,6 +7,7 @@ Usage:
   python tools/query_graph.py path <ID1> <ID2>    shortest path (undirected)
   python tools/query_graph.py uncovered [--type T]  nodes without an edge type
   python tools/query_graph.py briefing <ID>       paste-ready context block
+  python tools/query_graph.py backlog             open work items by prio
 
 Exit 1 on unknown ID, missing graph.json or bad usage. Python stdlib only.
 
@@ -20,13 +21,14 @@ log entry never needs re-checking.
 # pyright: basic
 
 import json
+import re
 import sys
 from collections import defaultdict, deque
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 
-USAGE = __doc__.strip().splitlines()[2:9]
+USAGE = __doc__.strip().splitlines()[2:10]
 
 # which endpoint of an edge depends on the other (None: no dependency)
 DEPENDS_ON = {
@@ -39,6 +41,7 @@ DEPENDS_ON = {
     "allocated_to": "to",    # SUB/IF implement the REQ
     "tested_by": "to",       # TC/test file verifies the REQ or IF
     "in_release": "to",      # the release plan carries the REQ
+    "tracks": "from",        # the backlog item tracks work on the target
     "affects": None,         # history - never a re-check target
 }
 
@@ -180,6 +183,35 @@ def cmd_path(nodes, out, inc, a, b):
             print(f"  {to} <-[{ty}]- {frm}")
 
 
+def cmd_backlog(nodes, out, inc):
+    """Open work items (BKL-###, type backlog-item) grouped by prio, each
+    with its tracks relations. The register (BACKLOG.md) is the source;
+    this is the generated read view."""
+    items = {nid: n for nid, n in nodes.items()
+             if n.get("type") == "backlog-item"}
+    if not items:
+        print("backlog: no open items (or no BACKLOG.md yet - "
+              "the register is the source of truth)")
+        return
+    order = {"P1": 0, "P2": 1, "P3": 2}
+
+    def prio_of(nid):
+        m = re.search(r"\bP\d\b", nodes[nid].get("excerpt", ""))
+        return m.group(0) if m else "?"
+
+    groups = defaultdict(list)
+    for nid in items:
+        groups[prio_of(nid)].append(nid)
+    print(f"backlog: {len(items)} open item(s)")
+    for p in sorted(groups, key=lambda x: order.get(x, 9)):
+        print(f"  {p} ({len(groups[p])}):")
+        for nid in sorted(groups[p]):
+            title = nodes[nid].get("title", "")
+            tracks = [o for t, o in out[nid] if t == "tracks"]
+            suffix = f" -> tracks: {', '.join(sorted(tracks))}" if tracks else ""
+            print(f"    {nid}: {title}{suffix}")
+
+
 def cmd_uncovered(g, nodes, out, inc, etype):
     types = ([etype] if etype else
              ["covers", "allocated_to", "tested_by", "decides"])
@@ -219,6 +251,8 @@ def main(argv):
     elif cmd == "uncovered" and (not args or
                                  (len(args) == 2 and args[0] == "--type")):
         cmd_uncovered(g, nodes, out, inc, args[1] if args else None)
+    elif cmd == "backlog" and not args:
+        cmd_backlog(nodes, out, inc)
     else:
         print("\n".join(USAGE), file=sys.stderr)
         sys.exit(1)

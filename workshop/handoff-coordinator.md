@@ -145,6 +145,16 @@ the way of working changes (new registers, artifact types, links), update
   (marker line `- Supersedes: DEC-###` under the DEC marker comment,
   anchored 2026-09-13 - use them when tracking whether a DEC still
   stands).
+- **Open work items live in BACKLOG.md (owner decision 2026-10-08 - the
+  current handoff carries NO shadow watchlist):** every open work item
+  that is not a REQ/OQ/FR/roadmap-package gets a `BKL-###` row (status
+  open / in-progress / blocked; the register is slim - closed rows are
+  DELETED by the registrar at unit close and referenced in the closing
+  CHG). The current handoff and your next-tasks REFERENCE BKL-###
+  instead of holding items themselves. Query:
+  `python tools/query_graph.py backlog` (open items by prio + tracks
+  relations). At every unit close: surfaced follow-ups become BKL rows,
+  closed BKL rows are deleted + CHG-referenced.
 
 ## Boundaries
 - No concrete editing of project artifacts - that is what work chats do.

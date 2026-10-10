@@ -9,7 +9,7 @@ file map. Keep it short - it is read first by every agent session
 <one paragraph: current phase/release, what is done, what is being worked on>
 
 ## Counts
-- Latest CHG: CHG-000 | DECs: 1 | REQ: 0 | OQ open: 1 | Risks: 0
+- Latest CHG: CHG-000 | DECs: 1 | REQ: 0 | OQ open: 1 | Risks: 0 | BKL open: 1
 - (update at every registrar pass - the register currency check at unit
   close verifies these against the actual registers)
 
@@ -25,6 +25,7 @@ file map. Keep it short - it is read first by every agent session
 | Decisions | `DECISIONS.md` |
 | Changes | `CHANGELOG.md` |
 | Open questions | `OPEN-QUESTIONS.md` |
+| Open work items | `BACKLOG.md` (BKL-###; query: `python tools/query_graph.py backlog`) |
 | Risks | `RISKS.md` |
 
 ## Regenerate

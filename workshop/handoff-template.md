@@ -124,6 +124,13 @@ Everything else: read-only.
    without CHG entries):** every commit of your unit has a CHANGELOG entry,
    STATE.md latest-CHG matches the newest entry, INDEX was rebuilt. No
    commit proposal without this check.
+   **Follow-up discipline (owner, 2026-10-08 - backlog register BKL):** if
+   your unit SURFACED open work it did not close (review findings deferred,
+   report-first items, small defects), add one row per item to the project's
+   `BACKLOG.md` (`BKL-###`, status open) - never a prose note in the
+   roadmap, the handoff watchlist or a chat line. Closed BKL items are
+   deleted by the registrar at unit close and referenced in the closing
+   CHG entry.
 4. Propose a commit (message draft) - do not commit without approval.
 5. **After every push to main:** check `gh run list` (one glance). A red
    main stops all new units until fixed - report it to the steering chat

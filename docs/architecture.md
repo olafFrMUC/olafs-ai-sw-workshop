@@ -58,6 +58,9 @@ Projects keep their truth in **machine-readable registers**:
 | `DECISIONS.md` | DEC-### | what was chosen, why, what it supersedes |
 | `CHANGELOG.md` | CHG-### | what changed, when, why |
 | `OPEN-QUESTIONS.md` | OQ-### | what is still open, resolved by which DEC |
+| `BACKLOG.md` | BKL-### | open WORK items (tech debt, follow-ups, small
+  defects) - slim: open/in-progress/blocked only, closed rows are
+  deleted at unit close + referenced in the closing CHG |
 | `RISKS.md` | RISK-### | what can hurt, mitigation |
 | `04-architecture/architecture.md` | SUB-###, IF-### | where things live, contracts |
 | `05-module-specification/test-cases.md` | TC-### | how it is proven |
@@ -69,7 +72,7 @@ From these, `tools/build_index.py` **generates** (never hand-edited):
 - `TRACEABILITY.md` - REQ <-> test/trace coverage
 - `graph.json` - the typed relation graph (`decides`, `affects`,
   `supersedes`, `closes`, `covers`, `allocated_to`, `tested_by`,
-  `in_release`, `links`)
+  `in_release`, `tracks`, `links`)
 
 **Why generated, not maintained:** small models (and tired humans) fail at
 structured state maintenance mostly by premature overwrite. State that can
@@ -92,7 +95,9 @@ idea -> Coordinator writes a DATED HANDOFF (task, done criterion,
         ABORT CONDITION, estimate incl. model class, write-scope, roles)
       -> owner go -> author executes (work chat or sub-agent)
       -> reviewer (!= author) checks AGAINST FILES
-      -> fixes -> verification -> registrar anchors (CHG, STATE, INDEX)
+      -> fixes -> verification -> registrar anchors (CHG, STATE, INDEX;
+            open follow-ups become BKL-### rows, closed BKL rows are
+            deleted + CHG-referenced)
       -> commit proposal -> OWNER approves -> push -> CI glance
 ```
 

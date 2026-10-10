@@ -447,7 +447,42 @@ def scan_if_test_markers():
 
 # ---------------------------------------------------------------- outputs
 
-def build_index(reqs, decs, oqs, risks, chgs, tc_rows):
+def parse_backlog():
+    """BACKLOG.md -> [{'id', 'title', 'excerpt', 'prio', 'status', 'links'}].
+
+    Table rows `| BKL-### | Item | Type | P# | Owner | Links | Status |`;
+    the status is the LAST cell (open | in-progress | blocked - there is no
+    done status, closed rows are deleted by the registrar). Robust against
+    literal pipes inside cells: id = first, status = last, prio = the
+    `P<digit>` cell, links = the cell holding machine-readable IDs. Returns
+    [] when the file or no data row exists (robustness contract)."""
+    out = []
+    path = ROOT / "BACKLOG.md"
+    if not path.exists():
+        return out
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line.startswith("| BKL-"):
+            continue
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if len(cells) < 4 or not re.fullmatch(r"BKL-\d{3}", cells[0]):
+            continue
+        prio = next((c for c in cells if re.fullmatch(r"P\d", c)), "?")
+        links = ""
+        for c in cells[1:-1]:
+            if extract_ids(c):
+                links = c
+                break
+        item = cells[1] if len(cells) > 1 else ""
+        meta = " | ".join(c for c in cells[2:-1] if c and c != links)
+        out.append({"id": cells[0], "title": short(item),
+                    "excerpt": short(item + (" (" + meta + ")" if meta else ""),
+                                     EXCERPT_MAX),
+                    "prio": prio, "status": cells[-1], "links": links})
+    return out
+
+
+def build_index(reqs, decs, oqs, risks, chgs, tc_rows, backlog=None):
+    backlog = backlog or []
     lines = [
         "# Index",
         "",
@@ -480,6 +515,11 @@ def build_index(reqs, decs, oqs, risks, chgs, tc_rows):
     lines += ["", "## Test cases (TC -> 05-module-specification/test-cases.md)", ""]
     for t in tc_rows:
         lines.append(f"- {t['tc']} | {t['req']} | {t['sub']}")
+    if backlog:
+        lines += ["", "## Backlog (BKL -> BACKLOG.md, open items)", ""]
+        key = {"P1": 0, "P2": 1, "P3": 2}
+        for b in sorted(backlog, key=lambda b: (key.get(b["prio"], 3), b["id"])):
+            lines.append(f"- {b['id']} | {b['prio']} | {b['status']} | {b['title']}")
     lines.append("")
     return "\n".join(lines)
 
@@ -573,11 +613,13 @@ ID_TOKEN = re.compile(
 PREFIX_TYPE = {"REQ": "requirement", "DEC": "decision", "OQ": "question",
                "RISK": "risk", "CHG": "change", "TC": "test-case",
                "SUB": "submodule", "IF": "interface", "ARC": "architecture",
-               "FR": "feature-request", "M": "agenda-item", "D": "directive"}
+               "FR": "feature-request", "M": "agenda-item", "D": "directive",
+               "BKL": "backlog-item"}
 
 # prefixes that live in parsed registers; edges to unknown ones are validator
 # warnings (typo detector). Other prefixes get implicit nodes, no warning.
-REGISTER_PREFIXES = ("REQ", "DEC", "OQ", "RISK", "CHG", "TC", "SUB", "IF")
+REGISTER_PREFIXES = ("REQ", "DEC", "OQ", "RISK", "CHG", "TC", "SUB", "IF",
+                     "BKL")
 
 
 def extract_ids(text):
@@ -774,7 +816,9 @@ def _natkey(nid):
                  for p in re.split(r"(\d+)", nid))
 
 
-def build_graph(reqs, decs, oqs, risks, chgs, cov, alloc, tc_rows, if_reg):
+def build_graph(reqs, decs, oqs, risks, chgs, cov, alloc, tc_rows, if_reg,
+                backlog=None):
+    backlog = backlog or []
     nodes = {}          # id -> {'id', 'type', 'title'?}
     edges = {}          # (from, to, type) -> source ('+'-joined when several)
 
@@ -887,6 +931,13 @@ def build_graph(reqs, decs, oqs, risks, chgs, cov, alloc, tc_rows, if_reg):
             implicit(tok)
             edge(cid, tok, "affects", "changelog")
 
+    # --- tracks: BKL -> machine-readable IDs in the Links cell
+    for b in backlog:
+        node(b["id"], "backlog-item", b["title"], b.get("excerpt"))
+        for tok in extract_ids(b["links"]):
+            implicit(tok)
+            edge(b["id"], tok, "tracks", "backlog-links")
+
     # --- in_release: REQ -> release (conservative RELEASES.md parse)
     rel = parse_releases()
     for r in rel["releases"]:
@@ -912,7 +963,7 @@ def build_graph(reqs, decs, oqs, risks, chgs, cov, alloc, tc_rows, if_reg):
     authoritative = ({r["id"] for r in reqs} | {d["id"] for d in decs} |
                      {o["id"] for o in oqs} | {r["id"] for r in risks} |
                      set(chg_ids) | {t["tc"] for t in tc_rows} |
-                     set(if_reg["ifs"]) |
+                     set(if_reg["ifs"]) | {b["id"] for b in backlog} |
                      {s for a in alloc.values() for s in a["sub"]})
     dangling = {}
     for (frm, to, etype) in edges:
@@ -948,15 +999,17 @@ def main():
     tc_rows = parse_tc_allocations()
 
     if_reg = parse_if_register()
+    backlog = parse_backlog()
 
-    (ROOT / "INDEX.md").write_text(build_index(reqs, decs, oqs, risks, chgs, tc_rows),
+    (ROOT / "INDEX.md").write_text(build_index(reqs, decs, oqs, risks, chgs,
+                                                tc_rows, backlog),
                                    encoding="utf-8")
     (ROOT / "TRACEABILITY.md").write_text(
         build_traceability(reqs, cov, alloc, tc_rows, if_reg),
         encoding="utf-8")
 
     graph = build_graph(reqs, decs, oqs, risks, chgs, cov, alloc, tc_rows,
-                        if_reg)
+                        if_reg, backlog)
     (ROOT / "graph.json").write_text(
         json.dumps(graph, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8")
@@ -974,7 +1027,8 @@ def main():
           f"no integration test: {', '.join(gaps) if gaps else 'none'}")
 
     print(f"REQ {len(reqs)} | DEC {len(decs)} | OQ {len(oqs)} | RISK {len(risks)} "
-          f"| CHG {len(chgs)} | covered {len(cov)} | allocated {len(alloc)}")
+          f"| CHG {len(chgs)} | BKL {len(backlog)} | covered {len(cov)} | "
+          f"allocated {len(alloc)}")
     missing = [r["id"] for r in reqs if r["id"] not in cov]
     print(f"uncovered (status open): {', '.join(missing) if missing else 'none'}")
 

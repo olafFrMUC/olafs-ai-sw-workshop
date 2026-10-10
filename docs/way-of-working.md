@@ -34,7 +34,8 @@ comments, CHG "Affected artifacts" IDs, OQ resolve-by cells):
 - After any register edit: `python tools/build_index.py` (rebuilds
   INDEX.md, TRACEABILITY.md, graph.json).
 - Ask it questions: `python tools/query_graph.py neighbors|impact|path|
-  uncovered|briefing <ID>`.
+  uncovered|briefing <ID>` - and `python tools/query_graph.py backlog`
+  for all open work items (BKL-###) by priority with their relations.
 - Look at it: `graph.bat` (builds + opens graph.html in the browser).
 
 Small projects see a small graph - fine. The point is you never retrofit:
@@ -49,7 +50,10 @@ when the registers grow, the picture is already there.
    blocking - otherwise document the assumption, keep going.
 3. The reviewer (never the author) checks the result **against files**.
 4. Findings fixed, verified; the registrar anchors: CHG entry, STATE.md,
-   `python tools/build_index.py`.
+   `python tools/build_index.py`. **Follow-up discipline:** open work the
+   unit surfaced but did not close becomes a `BKL-###` row in
+   `BACKLOG.md` (never a prose note in the roadmap or a chat line);
+   closed BKL rows are deleted and referenced in the closing CHG.
 5. Commit only with owner approval; after every push, one glance at CI.
 6. WORKLOG day entry (current date!) - the durable memory across
    sessions. Every significant step, not batched.

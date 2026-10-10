@@ -92,6 +92,14 @@ scope decision to resolve.
 R1" must contain the same set. When they differ, one of them is lying to the reader about what
 is being built.
 
+**Stale-item check (2026-10-08, with the backlog register):** if the
+project has a `BACKLOG.md` (BKL-###), sweep it too: (a) any row whose
+status is NOT open/in-progress/blocked = the row should have been
+deleted at close (report, never delete yourself - the registrar owns
+that); (b) any open row with neither a Links ID nor a named owner =
+drift finding; (c) BKL items also covered by an open OQ/FR = duplication
+finding against the register's non-duplication rule.
+
 ## Multi-agent editing rule
 
 Learned the expensive way: two agents fixed the same review finding in the same file, and the
