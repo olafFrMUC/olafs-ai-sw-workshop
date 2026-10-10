@@ -44,6 +44,17 @@ Robustness contract (see workshop/agent-navigation-supplement.md, Addition A):
   tripwire, not a proof: the authoritative per-IF crossing test is named
   in reviews/2026-08-22-phase-07-unit1-review.md. A missing file or section leaves both
   lines with an explicit note instead of failing the build.
+- BACKLOG.md (optional, open-items register): table rows
+  `| BKL-### | Item | Type | P# | Owner | Links | Status |` - id = first
+  cell (`BKL-0*[1-9]<digit>*`; BKL-000 is the template sentinel, skipped like
+  all sibling registers), status = LAST cell (open | in-progress |
+  blocked; closed rows are deleted, never marked done), prio = the
+  `P<digit>` cell, links = the second-to-last cell (end-anchored like the
+  OQ parser - a literal pipe inside the Item text shifts middle cells but
+  keeps end positions stable; the links cell must hold machine-readable
+  IDs via extract_ids, else it degrades to "no links", never to a guess).
+  A missing file or no data rows leaves the backlog empty instead of
+  failing the build.
 
 Linter/type-checker policy: this is a small, single-purpose utility with the
 documented robustness contract above. Strict type-annotation and style warnings
@@ -451,11 +462,17 @@ def parse_backlog():
     """BACKLOG.md -> [{'id', 'title', 'excerpt', 'prio', 'status', 'links'}].
 
     Table rows `| BKL-### | Item | Type | P# | Owner | Links | Status |`;
-    the status is the LAST cell (open | in-progress | blocked - there is no
-    done status, closed rows are deleted by the registrar). Robust against
-    literal pipes inside cells: id = first, status = last, prio = the
-    `P<digit>` cell, links = the cell holding machine-readable IDs. Returns
-    [] when the file or no data row exists (robustness contract)."""
+    anchored from the END (same trick as the OQ parser): status = last cell,
+    links = second-to-last, owner = third-to-last, type = fourth-to-last,
+    id = first - a literal pipe inside the Item text shifts the middle
+    cells but keeps the end-anchored positions stable. The links cell is
+    NEVER detected by scanning for ID tokens (review finding F1: an Item
+    text carrying its own IDs, e.g. "Investigate why REQ-010 differs from
+    REQ-012", would silently win over the author's real Links cell and
+    mint wrong tracks edges). Prio = the `P<digit>` cell anywhere. Rows
+    with BKL-000 (template sentinel, like all sibling registers) are
+    skipped. Returns [] when the file or no data row exists (robustness
+    contract)."""
     out = []
     path = ROOT / "BACKLOG.md"
     if not path.exists():
@@ -464,16 +481,16 @@ def parse_backlog():
         if not line.startswith("| BKL-"):
             continue
         cells = [c.strip() for c in line.strip().strip("|").split("|")]
-        if len(cells) < 4 or not re.fullmatch(r"BKL-\d{3}", cells[0]):
+        if len(cells) < 4 or not re.fullmatch(r"BKL-0*[1-9]\d*", cells[0]):
             continue
         prio = next((c for c in cells if re.fullmatch(r"P\d", c)), "?")
-        links = ""
-        for c in cells[1:-1]:
-            if extract_ids(c):
-                links = c
-                break
+        links = cells[-2] if len(cells) >= 2 else ""
+        # the links cell must actually hold machine-readable IDs - a shifted
+        # or placeholder cell degrades to "no links", never to a guess
+        if not extract_ids(links):
+            links = ""
         item = cells[1] if len(cells) > 1 else ""
-        meta = " | ".join(c for c in cells[2:-1] if c and c != links)
+        meta = " | ".join(c for c in cells[2:-2] if c)
         out.append({"id": cells[0], "title": short(item),
                     "excerpt": short(item + (" (" + meta + ")" if meta else ""),
                                      EXCERPT_MAX),
@@ -492,7 +509,8 @@ def build_index(reqs, decs, oqs, risks, chgs, tc_rows, backlog=None):
         "",
         f"Counts: {len(reqs)} REQ | {len(decs)} DEC | {len(oqs)} OQ "
         f"({sum(1 for o in oqs if 'resolved' in o['status'].lower())} resolved) | "
-        f"{len(risks)} RISK | {len(chgs)} CHG entries",
+        f"{len(risks)} RISK | {len(chgs)} CHG entries"
+        + (f" | {len(backlog)} BKL open" if backlog else ""),
         "",
         "## Requirements (REQ -> requirements.md)",
         "",
@@ -520,6 +538,10 @@ def build_index(reqs, decs, oqs, risks, chgs, tc_rows, backlog=None):
         key = {"P1": 0, "P2": 1, "P3": 2}
         for b in sorted(backlog, key=lambda b: (key.get(b["prio"], 3), b["id"])):
             lines.append(f"- {b['id']} | {b['prio']} | {b['status']} | {b['title']}")
+    # the Backlog section is conditional BY DESIGN: every other section
+    # header is permanent, but an empty backlog section would suggest a
+    # register the project has not adopted yet (review finding F6 -
+    # documented deviation, not an oversight)
     lines.append("")
     return "\n".join(lines)
 
@@ -934,6 +956,12 @@ def build_graph(reqs, decs, oqs, risks, chgs, cov, alloc, tc_rows, if_reg,
     # --- tracks: BKL -> machine-readable IDs in the Links cell
     for b in backlog:
         node(b["id"], "backlog-item", b["title"], b.get("excerpt"))
+        # carry the parsed fields onto the node - the query layer reads
+        # graph.json only and must not re-derive prio from excerpt text
+        # (review finding F3: an Item text like "P1 racing condition"
+        # would fool an excerpt heuristic into the wrong prio group)
+        nodes[b["id"]]["prio"] = b["prio"]
+        nodes[b["id"]]["status"] = b["status"]
         for tok in extract_ids(b["links"]):
             implicit(tok)
             edge(b["id"], tok, "tracks", "backlog-links")

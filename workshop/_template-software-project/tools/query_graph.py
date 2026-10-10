@@ -196,8 +196,10 @@ def cmd_backlog(nodes, out, inc):
     order = {"P1": 0, "P2": 1, "P3": 2}
 
     def prio_of(nid):
-        m = re.search(r"\bP\d\b", nodes[nid].get("excerpt", ""))
-        return m.group(0) if m else "?"
+        # the parser computed prio once (anchor-based, correct even when
+        # the Item text itself contains a P<digit> pattern - review
+        # finding F3); it rides on the graph node, no re-derivation here
+        return nodes[nid].get("prio", "?")
 
     groups = defaultdict(list)
     for nid in items:
