@@ -116,12 +116,12 @@ if (legendRows < 4 || filterRows !== typeCount) {
   console.error("FAIL: legend/filter rows wrong (expected", typeCount, "edge-type filters,", ">=4 legend rows)");
   process.exit(1);
 }
-// ---- exercise search and selection via captured listeners ----
 // data-driven: use the graph's own nodes, not hardcoded project IDs
 const graphNodes = JSON.parse(dataJson).nodes;
 const sample = graphNodes.find(n => n.excerpt) || graphNodes[0];
 const sampleId = sample.id;
 const frag = sampleId.replace(/^[A-Z]+-?/i, "") || sampleId;
+// ---- exercise search and selection via captured listeners ----
 const search = els["search"];
 search.value = sampleId;
 search.fire("input");
@@ -210,9 +210,8 @@ if (els["sp-excerpt"].textContent !== "" || els["sp-excerpt"].style.display !== 
   console.error("FAIL: excerpt element not cleared/hidden for", bare.id); process.exit(1);
 }
 console.log("no-excerpt node", bare.id, "renders cleanly");
-// toggle one edge-type filter off/on (only when edge types exist - a fresh
-// template project has 0 edges and therefore 0 filter checkboxes)
-if (els["filterrows"].children.length) {
+// toggle one edge-type filter off/on (only when the graph has edges at all)
+if (els["filterrows"].children.length > 0) {
   const cb0 = els["filterrows"].children[0].children[0];
   cb0.checked = false;
   cb0.fire("change");

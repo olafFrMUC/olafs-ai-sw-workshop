@@ -96,7 +96,7 @@ HTML = """<!DOCTYPE html>
 <body>
 <canvas id="canvas"></canvas>
 <div class="box" id="searchbox">
-  <input id="search" placeholder="Search ID or fragment (e.g. REQ-053)" autofocus>
+  <input id="search" placeholder="Search ID or fragment (e.g. REQ-042)" autofocus>
   <span id="matchinfo"></span>
 </div>
 <div class="box" id="matchlist"></div>
