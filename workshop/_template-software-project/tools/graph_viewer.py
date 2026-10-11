@@ -46,7 +46,19 @@ HTML = """<!DOCTYPE html>
   #search { width: calc(100% - 70px); background: #12151a; color: var(--fg);
     border: 1px solid var(--border); border-radius: 4px; padding: 4px 8px; }
   #search:focus { outline: none; border-color: #4c8dff; }
-  #matchinfo { color: var(--dim); margin-left: 8px; }
+  #matchinfo { color: var(--dim); margin-left: 4px; }
+  #matchinfo a { color: #7fb2ff; text-decoration: none; cursor: pointer;
+    padding: 0 3px; user-select: none; }
+  #matchinfo a:hover { text-decoration: underline; }
+  #matchlist { top: 52px; left: 10px; width: 300px; max-height: 260px;
+    overflow-y: auto; display: none; padding: 4px 0; }
+  #matchlist.open { display: block; }
+  #matchlist .hit { display: block; padding: 3px 12px; cursor: pointer;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #matchlist .hit:hover { background: #232a34; }
+  #matchlist .hit.active { background: #2c3a52; }
+  #matchlist .hit .hid { font-weight: 600; margin-right: 6px; }
+  #matchlist .hit .htitle { color: var(--dim); font-size: 12px; }
   #legend { top: 10px; right: 10px; }
   #legend h3, #filters h3 { margin: 0 0 6px; font-size: 11px;
     text-transform: uppercase; letter-spacing: .06em; color: var(--dim); }
@@ -87,6 +99,7 @@ HTML = """<!DOCTYPE html>
   <input id="search" placeholder="Search ID or fragment (e.g. REQ-053)" autofocus>
   <span id="matchinfo"></span>
 </div>
+<div class="box" id="matchlist"></div>
 <div id="legendwrap">
   <div class="box" id="legend"><h3>Node types</h3><div id="legendrows"></div></div>
   <div class="box" id="filters"><h3>Edge types</h3><div id="filterrows"></div></div>
@@ -580,6 +593,65 @@ function focusNode(n) {
 // ---- search ---------------------------------------------------------------
 const searchEl = document.getElementById("search");
 const matchInfoEl = document.getElementById("matchinfo");
+const matchListEl = document.getElementById("matchlist");
+
+function updateMatchUI() {
+  const n = matches.length;
+  matchInfoEl.innerHTML = "";
+  if (!searchEl.value.trim()) { matchListEl.classList.remove("open"); return; }
+  if (!n) { matchInfoEl.textContent = "no match"; matchListEl.classList.remove("open"); return; }
+  if (n > 1) {
+    const prev = document.createElement("a");
+    prev.textContent = "\u25C0";  // left triangle
+    prev.title = "previous match";
+    prev.addEventListener("click", () => stepMatch(-1));
+    matchInfoEl.appendChild(prev);
+  }
+  matchInfoEl.appendChild(document.createTextNode(
+    " " + (matchIdx + 1) + "/" + n + " "));
+  if (n > 1) {
+    const next = document.createElement("a");
+    next.textContent = "\u25B6";  // right triangle
+    next.title = "next match";
+    next.addEventListener("click", () => stepMatch(1));
+    matchInfoEl.appendChild(next);
+  }
+  // clickable hit list (BKL-042): rendered only when several matches exist
+  matchListEl.innerHTML = "";
+  if (n > 1) {
+    matches.forEach((id, i) => {
+      const node = byId.get(id);
+      const row = document.createElement("span");
+      row.className = "hit" + (i === matchIdx ? " active" : "");
+      const idSpan = document.createElement("span");
+      idSpan.className = "hid";
+      idSpan.textContent = id;
+      row.appendChild(idSpan);
+      if (node && node.title) {
+        const t = document.createElement("span");
+        t.className = "htitle";
+        t.textContent = node.title;
+        row.appendChild(t);
+      }
+      row.addEventListener("click", () => {
+        matchIdx = i;
+        updateMatchUI();
+        focusNode(byId.get(matches[matchIdx]));
+      });
+      matchListEl.appendChild(row);
+    });
+    matchListEl.classList.add("open");
+  } else {
+    matchListEl.classList.remove("open");
+  }
+}
+
+function stepMatch(delta) {
+  if (!matches.length) return;
+  matchIdx = (matchIdx + delta + matches.length) % matches.length;
+  updateMatchUI();
+  focusNode(byId.get(matches[matchIdx]));
+}
 
 function updateSearch() {
   const q = searchEl.value.trim().toLowerCase();
@@ -595,13 +667,12 @@ function updateSearch() {
     }
     matches = exact.concat(frag, title);
   }
-  matchInfoEl.textContent = q
-    ? (matches.length ? "1/" + matches.length : "no match") : "";
   if (matches.length) {
     matchIdx = 0;
-    matchInfoEl.textContent = "1/" + matches.length;
+    updateMatchUI();
     focusNode(byId.get(matches[0]));
   } else {
+    updateMatchUI();
     draw();
   }
 }
@@ -609,9 +680,7 @@ searchEl.addEventListener("input", updateSearch);
 searchEl.addEventListener("keydown", ev => {
   if (ev.key === "Enter" && matches.length) {
     ev.preventDefault();
-    matchIdx = (matchIdx + 1) % matches.length;
-    matchInfoEl.textContent = (matchIdx + 1) + "/" + matches.length;
-    focusNode(byId.get(matches[matchIdx]));
+    stepMatch(1);
   } else if (ev.key === "Escape") {
     searchEl.value = ""; updateSearch();
   }

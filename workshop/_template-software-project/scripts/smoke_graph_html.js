@@ -31,7 +31,7 @@ function makeCtx() {
   });
 }
 function makeEl(tag) {
-  return {
+  const el = {
     tagName: tag, children: [], style: {}, classList: {
       _s: new Set(),
       add(c) { this._s.add(c); },
@@ -41,17 +41,28 @@ function makeEl(tag) {
     listeners: {},
     addEventListener(t, fn) { (this.listeners[t] = this.listeners[t] || []).push(fn); },
     fire(t, ev) { (this.listeners[t] || []).forEach(fn => fn(ev || {})); },
-    appendChild(c) { this.children.push(c); },
-    append(...cs) { this.children.push(...cs); },
-    set textContent(v) { this._text = v; },
-    get textContent() { return this._text || ""; },
-    set innerHTML(v) { this._html = v; },
-    get innerHTML() { return this._html || ""; },
+    appendChild(c) { this.children.push(c); delete this._html; },
+    append(...cs) { this.children.push(...cs); delete this._html; },
     querySelector() { return makeEl("span"); },
     getContext() { return makeCtx(); },
     clientWidth: 1200, clientHeight: 800,
     width: 0, height: 0, value: "",
   };
+  Object.defineProperty(el, "textContent", {
+    get() {
+      // mirror DOM: textContent reads only the child tree / own text,
+      // never the raw innerHTML buffer (which updateMatchUI clears first)
+      if (this.children.length)
+        return this.children.map(c => c.textContent || "").join("");
+      return this._text || "";
+    },
+    set(v) { this._text = v; this.children = []; delete this._html; },
+  });
+  Object.defineProperty(el, "innerHTML", {
+    get() { return this._html || ""; },
+    set(v) { this._html = v; this.children = []; },
+  });
+  return el;
 }
 const els = {};
 global.document = {
@@ -60,7 +71,7 @@ global.document = {
     return els[id];
   },
   createElement(tag) { return makeEl(tag); },
-  createTextNode(t) { return makeEl("text"); },
+  createTextNode(t) { const el = makeEl("text"); el.textContent = t; return el; },
 };
 global.window = {
   devicePixelRatio: 1,
@@ -107,8 +118,8 @@ if (legendRows < 4 || filterRows !== typeCount) {
 }
 // ---- exercise search and selection via captured listeners ----
 // data-driven: use the graph's own nodes, not hardcoded project IDs
-const graphData = JSON.parse(dataJson);
-const sample = graphData.nodes.find(n => n.excerpt) || graphData.nodes[0];
+const graphNodes = JSON.parse(dataJson).nodes;
+const sample = graphNodes.find(n => n.excerpt) || graphNodes[0];
 const sampleId = sample.id;
 const frag = sampleId.replace(/^[A-Z]+-?/i, "") || sampleId;
 const search = els["search"];
@@ -117,7 +128,8 @@ search.fire("input");
 if (search.value !== sampleId) { console.error("FAIL: search wiring"); process.exit(1); }
 const mi = els["matchinfo"].textContent;
 console.log("search '" + sampleId + "' -> matchinfo:", JSON.stringify(mi));
-if (!/^1\/[1-9]/.test(mi) || els["sp-id"].textContent !== sampleId) {
+const miNum = (mi.match(/\d+\/\d+/) || [""])[0];
+if (!/^1\/[1-9]/.test(miNum) || els["sp-id"].textContent !== sampleId) {
   console.error("FAIL: exact id search (first match must be " + sampleId + ")");
   process.exit(1);
 }
@@ -126,7 +138,24 @@ search.value = frag;
 search.fire("input");
 const mi2 = els["matchinfo"].textContent;
 console.log("search '" + frag + "' -> matchinfo:", JSON.stringify(mi2));
-if (!/^1\/[1-9]/.test(mi2)) { console.error("FAIL: fragment search"); process.exit(1); }
+const mi2Num = (mi2.match(/\d+\/\d+/) || [""])[0];
+if (!/^1\/[1-9]/.test(mi2Num)) { console.error("FAIL: fragment search"); process.exit(1); }
+// BKL-042: multi-match navigation - arrows in the counter + clickable hit list
+if (!els["matchinfo"].children.some(c => c.tagName === "a")) {
+  console.error("FAIL: no prev/next arrows in matchinfo for multi-match"); process.exit(1);
+}
+const hits = els["matchlist"].children;
+if (!els["matchlist"].classList.contains("open") || hits.length < 2) {
+  console.error("FAIL: match hit list not open/populated for multi-match"); process.exit(1);
+}
+console.log("BKL-042: arrows present, hit list:", hits.length, "hits;");
+// click the second hit -> selection jumps there, counter follows
+hits[1].fire("click");
+const mi3 = els["matchinfo"].textContent;
+console.log("after hit-list click:", JSON.stringify(mi3), "| selected:", els["sp-id"].textContent);
+if (!/^2\//.test((mi3.match(/\d+\/\d+/) || [""])[0])) {
+  console.error("FAIL: hit-list click did not move the counter to 2/N"); process.exit(1);
+}
 // Enter jumps to next match without throwing
 search.fire("keydown", { key: "Enter", preventDefault: () => {} });
 console.log("after Enter:", JSON.stringify(els["matchinfo"].textContent));
@@ -155,7 +184,7 @@ console.log("capped excerpts (<= 800 + ellipsis):", capped.length);
 if (withEx.some(n => n.excerpt.length === 800 && !n.excerpt.endsWith("…"))) {
   console.error("FAIL: 800-char excerpt without ellipsis (cap violated)"); process.exit(1);
 }
-// known node: the sampled node must show its register text in the side panel
+// the sampled node must show its register text in the side panel
 const req001 = sample;
 if (!req001 || !req001.excerpt) {
   console.error("FAIL: sample node excerpt missing in graph data"); process.exit(1);
