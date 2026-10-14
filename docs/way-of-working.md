@@ -10,20 +10,33 @@ first for the why; this file is the how.
 2. **Create the project:** copy `workshop/_template-software-project/`
    to `apps/<name>/` (or `_template-knowledge-project/` to
    `knowledge/<name>/` for writing projects). Fill in `CLAUDE.md` and
-   `README.md`. `git init`, first commit, own repo, push.
-3. **Open the steering chat** (Coordinator): give it a short pointer -
-   "read `workshop/handoff-coordinator.md`, then start phase 01".
-   Model class: standard.
-4. **Phase 01 (requirements):** use `workshop/skills/testable-requirements/`
-   - every acceptance criterion gets a number and a condition. Then a
+   `README.md`. `git init`, first commit, push to **its own repository
+   OUTSIDE the workshop repo** - the workshop repo carries only the way
+   of working; no project artifact is ever committed into it. (In the
+   blueprint quickstart the workspace IS the workshop clone - without
+   its own `git init` the project would silently become part of the
+   workshop repo. That is the failure this rule prevents.)
+3. **The setup chat closes with an onboarding** (it is the methods
+   chat, `workshop/handoff-methods.md`): explain the roles in a few
+   lines, point out that the real work runs in a dedicated coordinator
+   chat - and prepare for it (a) the coordinator chat's first message
+   and (b) the first dated unit handoff (`workshop/handoff-template.md`).
+4. **Open the steering chat** (Coordinator): paste the prepared first
+   message - it points at `workshop/handoff-coordinator.md` and says
+   "start phase 01". Model class: standard.
+5. **Phase 01 (requirements):** use `workshop/skills/testable-requirements/`.
+   Two rules from day 1: the requirement STATEMENT is plain language a
+   stakeholder can repeat in their own words (no test jargon), and the
+   measurable test lives in the acceptance-criterion column - what is
+   measured, under which conditions, where the line is. Then a
    **review gate** (skill `review-gates/`): independent reviewer, verdict,
    baseline tag.
-5. **Phases 02-08:** concept -> validation concept -> architecture ->
+6. **Phases 02-08:** concept -> validation concept -> architecture ->
    module specification -> implementation -> integration -> validation.
    Each phase has its skill in `workshop/skills/` and ends in a gate.
    Not every project needs every phase in full depth - but phase 01 and
    the register discipline from day 1 are not negotiable.
-6. **From the first release on:** switch to incremental mode (below).
+7. **From the first release on:** switch to incremental mode (below).
 
 ## The graph (grows with your registers)
 

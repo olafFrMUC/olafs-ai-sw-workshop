@@ -37,6 +37,33 @@ File-Holder, Reviewer, Researcher, Registrar, Coordinator, Product
 Manager). Two iron rules: **one editor per file at a time**; **reviewer
 != author**. Roles are assigned per task at handoff.
 
+## First session in a fresh workspace (the setup agent)
+
+The agent that bootstraps the workspace (`workshop/setup.ps1`, template
+copy, first project) is the **methods agent** of this workspace -
+it owns the way of working, not the project content
+(`workshop/handoff-methods.md`). Setting up is only half the job. The
+setup session CLOSES with an **onboarding for the owner**:
+
+1. **Explain the roles** in a few lines - who decides (Owner), who
+   steers (Coordinator), who works (Author/Reviewer/Registrar) -
+   per `workshop/agent-roles.md`.
+2. **Point to the steering chat:** the actual project work runs in a
+   dedicated **coordinator chat**, not in this setup window - and make
+   starting it effortless: prepare (a) the coordinator chat's first
+   message (pointer to `workshop/handoff-coordinator.md`, the project
+   path, "start phase 01") and (b) the first dated unit handoff per
+   `workshop/handoff-template.md` so the coordinator can start
+   immediately.
+3. **Guarantee the repo boundary:** the development project gets its
+   OWN git repository, OUTSIDE the workshop repo
+   (`apps/<name>/` with its own `git init` + its own remote, or a
+   sibling directory entirely). The workshop repo carries only the way
+   of working - no project artifact is ever committed into it. Note: in
+   the blueprint quickstart the workspace IS the workshop clone, so a
+   project without its own `git init` would silently land inside the
+   workshop repo - that is the failure this rule exists to prevent.
+
 ## WORKLOG discipline
 
 After **every significant step** in any project, update `workshop/WORKLOG.md`:

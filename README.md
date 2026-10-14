@@ -81,12 +81,23 @@ The script (idempotent, safe to re-run) creates the full skeleton around
 itself: `apps/`, `knowledge/`, the project templates, the root README,
 and thin skill pointers for Claude Code (`.claude/skills/`).
 
+**The chat that runs the bootstrap is your methods chat** - its job is
+not done at the skeleton. It closes the setup with a short onboarding:
+it explains the roles, points you to the coordinator (steering) chat
+where the real work runs, and prepares that chat's first message plus
+the first unit handoff (see `AGENTS.md`, "First session in a fresh
+workspace").
+
 **Start your first project** (software):
 
 1. Copy `workshop/_template-software-project/` to `apps/<name>/`.
 2. Fill in `CLAUDE.md` and `README.md` (one short session).
-3. `cd apps/<name>; git init; commit; push` to its own repo.
-4. Open a steering chat: point it at `workshop/handoff-coordinator.md`.
+3. `cd apps/<name>; git init; commit; push` to **its own repo, outside
+   the workshop repo** - without this step the project silently becomes
+   part of the workshop repo (your workspace IS the clone). The
+   workshop repo carries only the method, never project artifacts.
+4. Open a steering chat: point it at `workshop/handoff-coordinator.md`
+   (the setup chat's prepared first message does exactly this).
 5. Phase 01 with `workshop/skills/testable-requirements/` ->
    `requirements.md` -> review gate. Then phases 02-08, each with its
    skill and a gate. Not every project needs all phases in full depth -

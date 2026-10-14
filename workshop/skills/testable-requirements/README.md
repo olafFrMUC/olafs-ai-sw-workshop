@@ -9,6 +9,32 @@ relevant, fast, measurably, as needed* - or names no number at all.
 
 ---
 
+## 0. The statement must be readable - the test lives in the criterion
+
+Observed on the blueprint's first external reuse: an agent wrote phase-01
+requirements whose STATEMENTS were cryptic test jargon - readable only
+to the test author, meaningless to everyone else. That is the mirror
+failure of a prose criterion, and just as blocking.
+
+The two columns of the register carry different jobs:
+
+- The **statement** says WHAT the system does, for WHOM, in plain domain
+  language - one sentence a stakeholder can repeat in their own words
+  without ever having seen the test. No metric names, no thresholds, no
+  fixtures in the statement.
+- The **acceptance criterion** carries ALL the measurement machinery:
+  what is measured, under which conditions, where the pass/fail line
+  sits (the three-part rule below).
+
+Bad (test-shaped statement): "p95 latency regression vector warm-cache
+4G mid-tier". Good: statement "The user sees the first result list
+quickly, also on a mid-range phone" + criterion "query -> first result
+list, mid-range mobile over 4G, warm cache, p95 <= 2.5 s over 100 runs".
+
+The readability test: hand the statement to someone who never saw the
+criterion. If they cannot say what the system promises, rewrite the
+statement - not the reader.
+
 ## 1. The three-part rule
 
 > A target is only useful if it names **what is measured**, **under which conditions**, and
@@ -107,6 +133,10 @@ set when the feature is built, and note which phase sets it.
 
 ## 9. Checklist
 
+- [ ] Statement readable in plain domain language - could a stakeholder
+  who never saw the test repeat it in their own words?
+- [ ] All test machinery (metrics, conditions, vectors) in the acceptance
+  criterion, none smuggled into the statement?
 - [ ] What is measured, under which conditions, where is the line?
 - [ ] Formula plus test vectors rather than a bare table?
 - [ ] Stability rule for noisy inputs?
