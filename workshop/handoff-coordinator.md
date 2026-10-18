@@ -101,6 +101,16 @@ the way of working changes (new registers, artifact types, links), update
   results back per scp, 3x-failure stop, time-boxed environment setup, runtime
   prognosis > 24 h = proposal, not silent reduction). Local interactive runs
   need the owner's "always allow" session setting or they hang on prompts.
+- **Deployment hygiene (2026-10-18, after a production box turned out to be
+  a directory of copied files - master branch, zero commits, no remote,
+  weeks of ad-hoc drift, caught only by an abort condition on a `git pull`
+  handoff):** a production checkout MUST be a real git clone with a
+  configured remote; deploys are `git pull` (fast-forward). At the FIRST
+  box contact of a term, verify it: `git -C <path> remote -v` +
+  `git -C <path> log -1` + `git -C <path> status` - a box that fails this
+  is a drift finding, escalated with options, never silently worked
+  around. File copies are a declared, time-boxed exception with a backlog
+  row to remove them (skill: box-evidence-drivers section 3).
 - Batch decisions, don't drip-feed: maintain the project's standing agenda
   `decision-meetings/agenda.md` (draft/ready/decided/processed), prepare items
   management-ready and moderate decision meetings on the owner's request -

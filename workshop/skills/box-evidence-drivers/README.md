@@ -64,11 +64,24 @@ One self-contained script per unit: `frontend/tests/<unit>-evidence.mjs`
   visible symptom); the construction-side fix then removes the whole
   class. Report the limit, never silently widen the claim.
 
-## 3. The deploy pairing (the box is NOT a git clone)
+## 3. The deploy pairing (the box MUST be a git clone - rule since 2026-10-18)
 
-`/opt/gkg` has no git history - files arrive by copy, and the copy must be
-provable. Pattern: `ops/deploy_marker_seam.sh` (born from the re-measure
-unit's EOL lesson: verify by content, normalized).
+**Rule (2026-10-18, after a real drift incident):** a production
+checkout is a REAL git clone with a configured remote; a deploy is
+`git pull` (fast-forward) from the tracked branch. File copies are a
+DECLARED EXCEPTION ONLY - time-boxed, named in the run record, with a
+backlog row to remove them. The incident that anchored this: a
+production box carried a directory of copied files on a `master` branch
+with zero commits and no remote; weeks of ad-hoc copies produced drift
+that only surfaced when a deploy handoff ordered `git pull` and the
+abort condition fired. The pairing pattern below stays for the
+TRANSITION until the box is re-attached - after that, the hash pairing
+verifies the pull instead of being the transport.
+
+Historical note (pre-2026-10-18): the box had no git history - files
+arrived by copy, and the copy had to be provable. Pattern:
+`ops/deploy_marker_seam.sh` (born from the re-measure unit's EOL
+lesson: verify by content, normalized).
 
 1. **LF-normalize + sha256 every file.** Local hash over
    `tr -d '\r' < file`; push through the same normalization; compare the
