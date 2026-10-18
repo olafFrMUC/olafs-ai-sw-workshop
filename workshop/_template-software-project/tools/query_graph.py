@@ -11,6 +11,10 @@ Usage:
                                        "button with no effect" finder)
   python tools/query_graph.py briefing <ID>       paste-ready context block
   python tools/query_graph.py backlog             open work items by prio
+  python tools/query_graph.py orphans             nodes without ANY edge
+                                      (finding class: CHG orphans -
+                                       historical or non-machine-readable
+                                       Affected-artifacts fields)
 
 Exit 1 on unknown ID, missing graph.json or bad usage. Python stdlib only.
 
@@ -31,7 +35,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 
-USAGE = __doc__.strip().splitlines()[2:10]
+USAGE = __doc__.strip().splitlines()[2:15]  # the Usage block - keep the
+# slice in sync when adding a command (an uncovered edit once silently
+# truncated the help output; the slice is cheaper than the regex)
 
 # which endpoint of an edge depends on the other (None: no dependency)
 DEPENDS_ON = {
@@ -217,6 +223,34 @@ def cmd_backlog(nodes, out, inc):
             print(f"    {nid}: {title}{suffix}")
 
 
+def cmd_orphans(g, nodes, out, inc):
+    """Nodes without ANY edge, grouped by type. Reading guide: *-000
+    template sentinels are EXPECTED orphans (delete them from a real
+    register or accept the noise); open OQs without links are legitimate
+    (they earn closes/links edges at resolution); CHG orphans are the
+    finding class - either historical entries from before the
+    machine-readable Affected-artifacts convention (backfill candidates;
+    precedent: the graph-island backfill, islands 68 -> 25) or a CHG
+    whose field was prose instead of `PREFIX-###` tokens (a finding for
+    the next unit close). A CHG-orphan count that RISES across sweeps
+    means the linkage discipline is slipping."""
+    connected = set()
+    for e in g["edges"]:
+        connected.add(e["from"])
+        connected.add(e["to"])
+    missing = defaultdict(list)
+    for nid, n in nodes.items():
+        if nid not in connected:
+            missing[n.get("type", "?")].append(nid)
+    total = sum(len(v) for v in missing.values())
+    print(f"orphans: {total} node(s) without any edge")
+    for nt, ids in sorted(missing.items()):
+        ids.sort()
+        shown = ids[:CAP]
+        more = f" +{len(ids) - CAP} more" if len(ids) > CAP else ""
+        print(f"  {nt} ({len(ids)}): {', '.join(shown)}{more}")
+
+
 def cmd_uncovered(g, nodes, out, inc, etype):
     if etype == "behaviour":
         # cell-based, not edge-based (2026-10-14): the Verified-by cell is
@@ -276,6 +310,8 @@ def main(argv):
         cmd_uncovered(g, nodes, out, inc, args[1] if args else None)
     elif cmd == "backlog" and not args:
         cmd_backlog(nodes, out, inc)
+    elif cmd == "orphans" and not args:
+        cmd_orphans(g, nodes, out, inc)
     else:
         print("\n".join(USAGE), file=sys.stderr)
         sys.exit(1)

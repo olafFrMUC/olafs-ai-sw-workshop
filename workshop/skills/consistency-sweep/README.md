@@ -129,6 +129,22 @@ prose, gate records) are deliberately FROZEN baselines once the project
 enters incremental mode - marked with a banner so no agent cites them
 as current truth.
 
+**Orphan check (2026-10-18, after a graph review showed chains of
+isolated CHG nodes):** `python tools/query_graph.py orphans` lists
+nodes without ANY edge, grouped by type. Read it with nuance:
+`PREFIX-000` template sentinels are EXPECTED orphans (delete them from
+a real register or accept the noise); open OQs without links are
+legitimate (they earn closes/links edges at resolution); **CHG orphans
+are the finding class** - either historical entries from before the
+machine-readable Affected-artifacts convention (backfill candidates;
+precedent: the graph-island backfill, islands 68 -> 25) or a CHG whose
+field was prose instead of `PREFIX-###` tokens (a finding for the next
+unit close). A CHG-orphan count that RISES across sweeps means the
+linkage discipline is slipping. Also check the small types: a release
+node without `in_release` edges, a REQ without any chain, a RISK
+without references are each worth one targeted look - not automatic
+findings, but never invisible.
+
 ## Multi-agent editing rule
 
 Learned the expensive way: two agents fixed the same review finding in the same file, and the
@@ -163,3 +179,5 @@ boundary, say so in the durable log rather than back-dating or leaving the gap.
 - [ ] Every BEH-### row carrying a `Verified by` test link?
 - [ ] Frozen documents carrying their frozen-banner (and nothing frozen
   without one)?
+- [ ] Orphans: every CHG node without any edge explained (historical =
+  backfill candidate) or flagged - and is the count rising across sweeps?
