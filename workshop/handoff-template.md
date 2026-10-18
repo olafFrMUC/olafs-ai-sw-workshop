@@ -19,6 +19,16 @@ are written in **English** (owner language rule, 2026-08-22).
 Done criterion: <measurable, e.g. "concept section 3.4 revised; coverage table
 checked; CHG entry written; STATE.md next-action updated; INDEX rebuilt via
 `python tools/build_index.py`">
+**Artifact impact (MANDATORY, 2026-10-14 - repeated gross defects lived in
+the gap between code and the spec documents, e.g. UI behaviour with no
+artifact at all):** state which development artifact DEFINES the behaviour
+this unit changes, with exactly one of:
+`none (reason)` / `updates: <file:section>` / `obsoletes: <file:section>` /
+`new BEH: <behaviour>` (observable behaviour with no artifact yet - add a
+row to the project's BEHAVIOUR.md, see the behaviour register).
+"None" requires a reason; the coordinator spot-checks the claim at unit
+close; the consistency-sweep samples it. If the behaviour has NO artifact
+anywhere, that is a finding, not a convenience - register it as BEH.
 Abort condition (MANDATORY when the done criterion names concrete external
 expectations - specific items, live measurements, payload checks): <e.g. "if a
 named item is not resolvable after <=3 targeted queries, STOP and report the
@@ -124,6 +134,10 @@ Everything else: read-only.
    without CHG entries):** every commit of your unit has a CHANGELOG entry,
    STATE.md latest-CHG matches the newest entry, INDEX was rebuilt. No
    commit proposal without this check.
+   **Artifact-truth check (2026-10-14):** the artifact-impact line from
+   your handoff is executed - the named artifact is updated/obsoleted, or
+   the new BEH row exists. The CHG entry names the artifact too, so the
+   graph carries the code<->spec link.
    **Follow-up discipline (owner, 2026-10-08 - backlog register BKL):** if
    your unit SURFACED open work it did not close (review findings deferred,
    report-first items, small defects), add one row per item to the project's

@@ -100,6 +100,35 @@ that); (b) any open row with neither a Links ID nor a named owner =
 drift finding; (c) BKL items also covered by an open OQ/FR = duplication
 finding against the register's non-duplication rule.
 
+**Artifact-freshness check (2026-10-14, after the phase documents
+fossilized in a real project - concept docs untouched for months while
+dozens of changes shipped, and gross UI defects lived in behaviour no
+artifact defined):** sweep the LIVING artifact set against reality,
+mechanically:
+
+- (a) Per living artifact: `git log -1 --format=%ad -- <path>` vs the
+  number of CHGs since that date whose `affects` edges touch its IDs
+  (`query_graph.py impact <ID>`). Drift beyond the project threshold
+  (default: >10 CHGs) = staleness finding.
+- (b) `python tools/query_graph.py uncovered --type behaviour` -
+  observable behaviour (BEH-###) WITHOUT a `Verified by` test link is
+  the "button with no effect" class; every uncovered row is a finding.
+- (c) `uncovered --type section` - concept sections no living REQ
+  references anymore = potentially obsolete prose; report, do not
+  delete (freezing a baseline is an owner decision, recorded with a
+  banner in the doc).
+- (d) Frozen documents carrying no frozen-banner = finding (a doc that
+  looks alive but is not is worse than an honestly frozen one).
+
+The two-tier rule behind this: TIER-1 artifacts (STATE, BACKLOG,
+CHANGELOG, DECISIONS, requirements, IF/SUB registers, TC allocation +
+test suites, BEHAVIOUR.md, RELEASES/ROADMAP, generated INDEX/
+TRACEABILITY/graph) must be current at all times; TIER-2 phase
+documents (02-solution-concept, 03-validation-concept, 04-architecture
+prose, gate records) are deliberately FROZEN baselines once the project
+enters incremental mode - marked with a banner so no agent cites them
+as current truth.
+
 ## Multi-agent editing rule
 
 Learned the expensive way: two agents fixed the same review finding in the same file, and the
@@ -130,3 +159,7 @@ boundary, say so in the durable log rather than back-dating or leaving the gap.
 - [ ] Same-scope documents holding the same set?
 - [ ] Artifact dates matching the calendar days they were written (or the crossing noted)?
 - [ ] Only one agent editing each file?
+- [ ] Artifact-freshness: living artifacts within the CHG-drift threshold?
+- [ ] Every BEH-### row carrying a `Verified by` test link?
+- [ ] Frozen documents carrying their frozen-banner (and nothing frozen
+  without one)?

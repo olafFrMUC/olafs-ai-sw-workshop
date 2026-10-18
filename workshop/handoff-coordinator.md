@@ -113,6 +113,14 @@ the way of working changes (new registers, artifact types, links), update
   newest CHANGELOG entry covers the unit's commits, STATE latest-CHG
   matches, INDEX freshly built - if stale, a small registrar fix is part of
   closing the unit, not an optional extra.
+  **Artifact-impact check at every unit close (2026-10-14):** every handoff
+  carries an `Artifact impact` line (none(+)reason / updates / obsoletes /
+  new BEH). At close: verify the claim - the named artifact was actually
+  touched or the BEH row exists; an unexplained "none" on a
+  behaviour-changing unit is a finding, not a pass. The drift this guards
+  against: phase documents fossilized while dozens of changes shipped -
+  defects like "search button with no effect" lived where NO artifact
+  defined the behaviour.
 - **Main stays green (discipline since 2026-09-12):** after every push to
   main, check `gh run list`. A red main stops all new units until fixed -
   brief no new unit onto a red main; the fix becomes the critical path.
@@ -155,6 +163,16 @@ the way of working changes (new registers, artifact types, links), update
   `python tools/query_graph.py backlog` (open items by prio + tracks
   relations). At every unit close: surfaced follow-ups become BKL rows,
   closed BKL rows are deleted + CHG-referenced.
+- **Observable behaviour lives in BEHAVIOUR.md (2026-10-14):** what a
+  user/API consumer can SEE (UI layout, buttons, tabs, search semantics,
+  endpoint shapes) gets a `BEH-###` row with a `Verified by` test link -
+  behaviours without one are the exact defect class that produced
+  "button with no effect". Query:
+  `python tools/query_graph.py uncovered --type behaviour`. When a unit
+  changes observable behaviour: update the BEH row (or add one) and keep
+  its test link honest - that is the light traceability chain for
+  incremental mode (BKL/REQ -> BEH -> test), complementing the full
+  V-chain that ends at the frozen phase baselines.
 
 ## Boundaries
 - No concrete editing of project artifacts - that is what work chats do.

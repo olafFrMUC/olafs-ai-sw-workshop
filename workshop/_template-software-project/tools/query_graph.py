@@ -6,6 +6,9 @@ Usage:
   python tools/query_graph.py impact <ID>         transitive re-check set
   python tools/query_graph.py path <ID1> <ID2>    shortest path (undirected)
   python tools/query_graph.py uncovered [--type T]  nodes without an edge type
+                                      (--type behaviour: BEH rows without
+                                       a verifying test - the
+                                       "button with no effect" finder)
   python tools/query_graph.py briefing <ID>       paste-ready context block
   python tools/query_graph.py backlog             open work items by prio
 
@@ -215,6 +218,24 @@ def cmd_backlog(nodes, out, inc):
 
 
 def cmd_uncovered(g, nodes, out, inc, etype):
+    if etype == "behaviour":
+        # cell-based, not edge-based (2026-10-14): the Verified-by cell is
+        # the source of truth - a behaviour without a named guarding test
+        # is the "button with no effect" class, independent of whether the
+        # named test exists as a graph node. `<none>` and empty count as
+        # uncovered; rows must name a test or own the gap.
+        rows = [(nid, n.get("title", "")) for nid, n in nodes.items()
+                if n.get("type") == "behaviour"
+                and (not n.get("verified_by")
+                     or n.get("verified_by") == "<none>")]
+        print(f"uncovered [behaviour]: {len(rows)} behaviour(s) without a "
+              f"verifying test")
+        for nid, title in sorted(rows):
+            print(f"  {nid}: {title}")
+        if not rows and any(n.get("type") == "behaviour"
+                            for n in nodes.values()):
+            print("  (all BEH rows carry a Verified-by test link)")
+        return
     types = ([etype] if etype else
              ["covers", "allocated_to", "tested_by", "decides"])
     for ty in types:

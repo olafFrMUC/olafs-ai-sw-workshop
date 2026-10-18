@@ -49,6 +49,9 @@ comments, CHG "Affected artifacts" IDs, OQ resolve-by cells):
 - Ask it questions: `python tools/query_graph.py neighbors|impact|path|
   uncovered|briefing <ID>` - and `python tools/query_graph.py backlog`
   for all open work items (BKL-###) by priority with their relations.
+- Behaviour coverage: `python tools/query_graph.py uncovered --type
+  behaviour` lists every observable behaviour (BEH-### in BEHAVIOUR.md)
+  WITHOUT a verifying test - the "button with no effect" finder.
 - Look at it: `graph.bat` (builds + opens graph.html in the browser).
 
 Small projects see a small graph - fine. The point is you never retrofit:

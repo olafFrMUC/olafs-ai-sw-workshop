@@ -55,6 +55,17 @@ Robustness contract (see workshop/agent-navigation-supplement.md, Addition A):
   IDs via extract_ids, else it degrades to "no links", never to a guess).
   A missing file or no data rows leaves the backlog empty instead of
   failing the build.
+- BEHAVIOUR.md (optional, observable-behaviour register): table rows
+  `| BEH-### | Behaviour | Where observable | Verified by | Links |
+  Status |` - id = first cell (`BEH-0*[1-9]<digit>*`; BEH-000 is the
+  template sentinel, skipped like all sibling registers), status = LAST
+  cell, links = second-to-last (end-anchored, same trick as the backlog
+  parser), verified-by = third-to-last. Nodes are `behaviour` type;
+  `tracks` edges from the links cell; `verified_by` edges when the
+  named target exists as a node. `query_graph.py uncovered --type
+  behaviour` lists rows whose Verified-by cell is empty/placeholder -
+  the "button with no effect" finder. A missing file or no data rows
+  leaves the register empty instead of failing the build.
 
 Linter/type-checker policy: this is a small, single-purpose utility with the
 documented robustness contract above. Strict type-annotation and style warnings
@@ -498,8 +509,49 @@ def parse_backlog():
     return out
 
 
-def build_index(reqs, decs, oqs, risks, chgs, tc_rows, backlog=None):
+def parse_behaviour():
+    """BEHAVIOUR.md -> [{'id', 'title', 'excerpt', 'where', 'verified_by',
+    'status', 'links'}].
+
+    Table rows `| BEH-### | Behaviour | Where | Verified by | Links |
+    Status |`; end-anchored like the backlog parser: status = last cell,
+    links = second-to-last, verified-by = third-to-last - a literal pipe
+    inside the Behaviour text shifts middle cells but keeps the end
+    positions stable. The links cell must hold machine-readable IDs via
+    extract_ids, else it degrades to "no links", never to a guess (same
+    review lesson as the backlog links cell). Verified-by `<none>` (or
+    empty) is kept verbatim - it is the honest "no test" marker that
+    `uncovered --type behaviour` reports. Rows with BEH-000 (template
+    sentinel, like all sibling registers) are skipped. Returns [] when
+    the file or no data row exists (robustness contract)."""
+    out = []
+    path = ROOT / "BEHAVIOUR.md"
+    if not path.exists():
+        return out
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line.startswith("| BEH-"):
+            continue
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if len(cells) < 4 or not re.fullmatch(r"BEH-0*[1-9]\d*", cells[0]):
+            continue
+        links = cells[-2] if len(cells) >= 2 else ""
+        if not extract_ids(links):
+            links = ""
+        verified_by = cells[-3] if len(cells) >= 3 else ""
+        item = cells[1] if len(cells) > 1 else ""
+        where = cells[2] if len(cells) > 2 else ""
+        out.append({"id": cells[0], "title": short(item),
+                    "excerpt": short(item + (" (" + where + ")" if where else ""),
+                                     EXCERPT_MAX),
+                    "where": where, "verified_by": verified_by,
+                    "status": cells[-1], "links": links})
+    return out
+
+
+def build_index(reqs, decs, oqs, risks, chgs, tc_rows, backlog=None,
+                behaviour=None):
     backlog = backlog or []
+    behaviour = behaviour or []
     lines = [
         "# Index",
         "",
@@ -538,8 +590,12 @@ def build_index(reqs, decs, oqs, risks, chgs, tc_rows, backlog=None):
         key = {"P1": 0, "P2": 1, "P3": 2}
         for b in sorted(backlog, key=lambda b: (key.get(b["prio"], 3), b["id"])):
             lines.append(f"- {b['id']} | {b['prio']} | {b['status']} | {b['title']}")
-    # the Backlog section is conditional BY DESIGN: every other section
-    # header is permanent, but an empty backlog section would suggest a
+    if behaviour:
+        lines += ["", "## Behaviour (BEH -> BEHAVIOUR.md, observable)", ""]
+        for b in sorted(behaviour, key=lambda b: b["id"]):
+            lines.append(f"- {b['id']} | {b['status']} | {b['title']}")
+    # the Backlog/Behaviour sections are conditional BY DESIGN: every other
+    # section header is permanent, but an empty section would suggest a
     # register the project has not adopted yet (review finding F6 -
     # documented deviation, not an oversight)
     lines.append("")
@@ -636,12 +692,12 @@ PREFIX_TYPE = {"REQ": "requirement", "DEC": "decision", "OQ": "question",
                "RISK": "risk", "CHG": "change", "TC": "test-case",
                "SUB": "submodule", "IF": "interface", "ARC": "architecture",
                "FR": "feature-request", "M": "agenda-item", "D": "directive",
-               "BKL": "backlog-item"}
+               "BKL": "backlog-item", "BEH": "behaviour"}
 
 # prefixes that live in parsed registers; edges to unknown ones are validator
 # warnings (typo detector). Other prefixes get implicit nodes, no warning.
 REGISTER_PREFIXES = ("REQ", "DEC", "OQ", "RISK", "CHG", "TC", "SUB", "IF",
-                     "BKL")
+                     "BKL", "BEH")
 
 
 def extract_ids(text):
@@ -839,8 +895,9 @@ def _natkey(nid):
 
 
 def build_graph(reqs, decs, oqs, risks, chgs, cov, alloc, tc_rows, if_reg,
-                backlog=None):
+                backlog=None, behaviour=None):
     backlog = backlog or []
+    behaviour = behaviour or []
     nodes = {}          # id -> {'id', 'type', 'title'?}
     edges = {}          # (from, to, type) -> source ('+'-joined when several)
 
@@ -966,6 +1023,24 @@ def build_graph(reqs, decs, oqs, risks, chgs, cov, alloc, tc_rows, if_reg,
             implicit(tok)
             edge(b["id"], tok, "tracks", "backlog-links")
 
+    # --- tracks/verified_by: BEH -> Links IDs / the guarding test
+    for b in behaviour:
+        node(b["id"], "behaviour", b["title"], b.get("excerpt"))
+        # the query layer reads graph.json only: carry the cells verbatim
+        # (a `<none>` verified_by is the honest "no test" marker that
+        # `uncovered --type behaviour` reports - never silently dropped)
+        nodes[b["id"]]["status"] = b["status"]
+        nodes[b["id"]]["verified_by"] = b["verified_by"]
+        for tok in extract_ids(b["links"]):
+            implicit(tok)
+            edge(b["id"], tok, "tracks", "behaviour-links")
+        vb = b["verified_by"]
+        if vb and vb != "<none>":
+            for m in re.finditer(r"[\w./-]+\.(?:py|ts|js)", vb):
+                t = m.group(0)
+                if t in nodes:
+                    edge(b["id"], t, "verified_by", "behaviour-verifiedby")
+
     # --- in_release: REQ -> release (conservative RELEASES.md parse)
     rel = parse_releases()
     for r in rel["releases"]:
@@ -992,6 +1067,7 @@ def build_graph(reqs, decs, oqs, risks, chgs, cov, alloc, tc_rows, if_reg,
                      {o["id"] for o in oqs} | {r["id"] for r in risks} |
                      set(chg_ids) | {t["tc"] for t in tc_rows} |
                      set(if_reg["ifs"]) | {b["id"] for b in backlog} |
+                     {b["id"] for b in behaviour} |
                      {s for a in alloc.values() for s in a["sub"]})
     dangling = {}
     for (frm, to, etype) in edges:
@@ -1028,16 +1104,17 @@ def main():
 
     if_reg = parse_if_register()
     backlog = parse_backlog()
+    behaviour = parse_behaviour()
 
     (ROOT / "INDEX.md").write_text(build_index(reqs, decs, oqs, risks, chgs,
-                                                tc_rows, backlog),
+                                                tc_rows, backlog, behaviour),
                                    encoding="utf-8")
     (ROOT / "TRACEABILITY.md").write_text(
         build_traceability(reqs, cov, alloc, tc_rows, if_reg),
         encoding="utf-8")
 
     graph = build_graph(reqs, decs, oqs, risks, chgs, cov, alloc, tc_rows,
-                        if_reg, backlog)
+                        if_reg, backlog, behaviour)
     (ROOT / "graph.json").write_text(
         json.dumps(graph, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8")
