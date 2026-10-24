@@ -172,7 +172,12 @@ the way of working changes (new registers, artifact types, links), update
   instead of holding items themselves. Query:
   `python tools/query_graph.py backlog` (open items by prio + tracks
   relations). At every unit close: surfaced follow-ups become BKL rows,
-  closed BKL rows are deleted + CHG-referenced.
+  closed BKL rows are deleted + CHG-referenced. **Id discipline
+  (2026-10-18, after BKL-065 was issued twice):** new rows take the id
+  from the `Next free BKL id` marker at the top of BACKLOG.md and
+  increment it in the same edit - deleted rows are invisible, ids are
+  never reused. build_index.py warns when the marker is missing or
+  reached.
 - **Observable behaviour lives in BEHAVIOUR.md (2026-10-14):** what a
   user/API consumer can SEE (UI layout, buttons, tabs, search semantics,
   endpoint shapes) gets a `BEH-###` row with a `Verified by` test link -
@@ -182,7 +187,9 @@ the way of working changes (new registers, artifact types, links), update
   changes observable behaviour: update the BEH row (or add one) and keep
   its test link honest - that is the light traceability chain for
   incremental mode (BKL/REQ -> BEH -> test), complementing the full
-  V-chain that ends at the frozen phase baselines.
+  V-chain that ends at the frozen phase baselines. BEH rows are deleted
+  at close like BKL rows - same id discipline: take the `Next free BEH
+  id` marker value, increment it in the same edit (2026-10-18).
 
 ## Boundaries
 - No concrete editing of project artifacts - that is what work chats do.

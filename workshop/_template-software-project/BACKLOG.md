@@ -10,6 +10,12 @@ blocked`. There is NO done status: the registrar DELETES closed rows at
 unit close and references the BKL-### in the closing CHG entry (like
 `closes OQ-###`). History lives in the CHG + git, never in this register.
 
+**Next free BKL id: BKL-002** — MANDATORY: every new row takes THIS id
+and increments the marker **in the same edit**. Deleted rows are
+invisible; without the marker, ids get recycled and old CHG references
+silently point at the wrong item (real incident 2026-10-18: BKL-065 was
+issued twice). Deleted ids are never reused.
+
 **Non-duplication rule (binding):**
 
 | Content | Home | NOT the backlog because |
@@ -34,3 +40,7 @@ unit close and references the BKL-### in the closing CHG entry (like
      - Links: machine-readable IDs (`PREFIX-###`, `..` ranges, `/` shorthand,
        no wrap inside a token) - they become `tracks` edges in the graph
      - Status (LAST cell): open | in-progress | blocked -->
+     <!-- - the "Next free BKL id" marker above is part of the register:
+       new row = take the marker value, increment the marker in the same
+       edit. tools/build_index.py warns when the marker is missing or a
+       live row reached it. -->

@@ -20,6 +20,11 @@ never restates it. One row per user-visible behaviour, not per function.
 removed, the row is DELETED by the registrar at unit close and
 referenced in the closing CHG - history lives in the CHG + git.
 
+**Next free BEH id: BEH-001** — MANDATORY: every new row takes THIS id
+and increments the marker **in the same edit**. Deleted rows are
+invisible; without the marker, ids get recycled and old CHG references
+silently point at the wrong behaviour. Deleted ids are never reused.
+
 ## Register
 
 | ID | Behaviour | Where observable | Verified by | Links | Status |
@@ -36,4 +41,8 @@ referenced in the closing CHG - history lives in the CHG + git.
        honestly testless - shows up in `uncovered --type behaviour`
      - Links: machine-readable IDs (`PREFIX-###`, `..` ranges, `/` shorthand,
        no wrap inside a token) - they become `tracks` edges in the graph
-     - Status (LAST cell): living | boundary (explicitly out of test scope) -->
+     - Status (LAST cell): living | boundary (explicitly out of test scope)
+     - the "Next free BEH id" marker above is part of the register:
+       new row = take the marker value, increment the marker in the same
+       edit. tools/build_index.py warns when the marker is missing or a
+       live row reached it. -->

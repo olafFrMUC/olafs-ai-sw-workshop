@@ -144,7 +144,12 @@ Everything else: read-only.
    `BACKLOG.md` (`BKL-###`, status open) - never a prose note in the
    roadmap, the handoff watchlist or a chat line. Closed BKL items are
    deleted by the registrar at unit close and referenced in the closing
-   CHG entry.
+   CHG entry. **Id discipline (2026-10-18, after BKL-065 was issued
+   twice):** the new id comes from the `Next free BKL id` marker at the
+   top of BACKLOG.md - take its value and increment the marker in the
+   SAME edit. Deleted rows are invisible; without the marker the next
+   free id is unknowable and old CHG references silently point at the
+   wrong item. Deleted ids are never reused.
 4. Propose a commit (message draft) - do not commit without approval.
 5. **After every push to main:** check `gh run list` (one glance). A red
    main stops all new units until fixed - report it to the steering chat

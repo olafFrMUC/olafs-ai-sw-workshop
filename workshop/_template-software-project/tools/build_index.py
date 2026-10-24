@@ -548,6 +548,35 @@ def parse_behaviour():
     return out
 
 
+def check_next_free_markers(backlog, behaviour):
+    """Warn when a deletable register lacks its 'Next free <PREFIX> id'
+    marker or a live row already reached it (2026-10-18, real incident:
+    BKL-065 was issued twice because deleted rows are invisible - the
+    next free id was unknowable). Both BKL and BEH delete rows at close
+    (slimness rule), so both carry the marker; the check is a WARNING,
+    never a hard fail (robustness contract: a missing register is fine,
+    a missing marker in an existing register is drift)."""
+    for fname, prefix, rows in (("BACKLOG.md", "BKL", backlog),
+                                ("BEHAVIOUR.md", "BEH", behaviour)):
+        if not rows:
+            continue
+        path = ROOT / fname
+        text = path.read_text(encoding="utf-8") if path.exists() else ""
+        m = re.search(rf"Next free {prefix} id:\s*{prefix}-(\d+)", text)
+        if not m:
+            print(f"WARN {fname}: no 'Next free {prefix} id' marker - "
+                  f"deleted rows are invisible, ids get recycled",
+                  file=sys.stderr)
+            continue
+        free = int(m.group(1))
+        top = max(int(r["id"].split("-")[1]) for r in rows)
+        if top >= free:
+            print(f"WARN {fname}: marker {prefix}-{free:03d} <= max live "
+                  f"{prefix}-{top:03d} - new rows take the marker value and "
+                  f"increment it in the same edit",
+                  file=sys.stderr)
+
+
 def build_index(reqs, decs, oqs, risks, chgs, tc_rows, backlog=None,
                 behaviour=None):
     backlog = backlog or []
@@ -1105,6 +1134,7 @@ def main():
     if_reg = parse_if_register()
     backlog = parse_backlog()
     behaviour = parse_behaviour()
+    check_next_free_markers(backlog, behaviour)
 
     (ROOT / "INDEX.md").write_text(build_index(reqs, decs, oqs, risks, chgs,
                                                 tc_rows, backlog, behaviour),

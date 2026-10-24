@@ -98,7 +98,14 @@ status is NOT open/in-progress/blocked = the row should have been
 deleted at close (report, never delete yourself - the registrar owns
 that); (b) any open row with neither a Links ID nor a named owner =
 drift finding; (c) BKL items also covered by an open OQ/FR = duplication
-finding against the register's non-duplication rule.
+finding against the register's non-duplication rule; (d) **id-recycling
+check (2026-10-18, after BKL-065 was issued twice):** the `Next free
+BKL id` / `Next free BEH id` marker exists and exceeds every live row
+id - and no BKL/BEH id referenced in the CHANGELOG or graph edges is
+REUSED by a live row with different content (deleted rows are
+invisible; a recycled id makes old CHG references silently point at the
+wrong item). build_index.py warns on a missing/reached marker; the
+sweep checks the reuse case.
 
 **Artifact-freshness check (2026-10-14, after the phase documents
 fossilized in a real project - concept docs untouched for months while
