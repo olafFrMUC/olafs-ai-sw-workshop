@@ -35,6 +35,27 @@ The readability test: hand the statement to someone who never saw the
 criterion. If they cannot say what the system promises, rewrite the
 statement - not the reader.
 
+## 0b. Taking over existing requirements (content migration)
+
+When requirements already exist (a document, another tool, an AI draft),
+do NOT re-author them. Migrate them with the extract-then-judge pattern
+(`workshop/handoff-template.md`, "Content-migration pattern"):
+
+- **Extract first:** map every source requirement into the register 1:1,
+  verbatim where possible. Where a row violates the two-column rule or
+  has no decidable criterion, insert a MARKER (`<UNRESOLVED: ...>` +
+  OQ link) instead of deciding on the spot.
+- **Judge only the markers:** splitting, rewording and threshold-setting
+  happen per marker with options - a handful of targeted judgements,
+  not deliberation over every row.
+- **Preserve over rewrite:** an "adapted" row needs a one-line reason
+  (which rule the source violated), never free rewording.
+- **Time-box per element:** ~2 minutes of judgement per source item,
+  then marker + move on; report a 50 % progress checkpoint.
+
+This is what keeps a takeover cheap: the agent transforms instead of
+deliberating, and the real decisions stay visible as markers/OQs.
+
 ## 1. The three-part rule
 
 > A target is only useful if it names **what is measured**, **under which conditions**, and

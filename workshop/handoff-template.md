@@ -16,6 +16,26 @@ are written in **English** (owner language rule, 2026-08-22).
 
 ## Task
 <concrete, one unit>
+**Content-migration pattern (2026-10-31, after a takeover unit
+deliberated at length over content it should only have transformed):**
+when a unit TAKES OVER existing content (requirements, concepts, code)
+instead of authoring it new, do NOT frame it as an authoring task.
+Frame it as extract-then-judge:
+1. **Extract mechanically (mechanical class):** move source content into
+   the target format 1:1 wherever possible. NO semantic judgement per
+   row - where the source does not fit, insert a MARKER
+   (`<UNRESOLVED: ...>` + OQ link), not a decision. Splitting,
+   rewording, "improving" is FORBIDDEN in this step.
+2. **Judge only the markers (standard/strong class):** the real
+   decisions happen per marker, with options - a handful of targeted
+   judgements instead of deliberation over every line.
+3. **Preserve over rewrite:** source text is kept unless it violates a
+   binding format rule (e.g. the two-column requirement rule); "adapt"
+   needs a one-line reason per row, never an essay.
+4. **Per-element time-box:** ~2 minutes of judgement per source element,
+   then marker + move on. Report a progress checkpoint at 50 %
+   (mapped/total, marker count) to the coordinator - it breaks
+   deliberation loops.
 Done criterion: <measurable, e.g. "concept section 3.4 revised; coverage table
 checked; CHG entry written; STATE.md next-action updated; INDEX rebuilt via
 `python tools/build_index.py`">

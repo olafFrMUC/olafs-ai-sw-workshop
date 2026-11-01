@@ -131,6 +131,15 @@ the way of working changes (new registers, artifact types, links), update
   against: phase documents fossilized while dozens of changes shipped -
   defects like "search button with no effect" lived where NO artifact
   defined the behaviour.
+- **Content-migration units (2026-10-31, after a takeover unit
+  deliberated at length):** when a unit TAKES OVER existing content
+  rather than authoring it, use the extract-then-judge pattern
+  (handoff-template.md, "Content-migration pattern"): split it into a
+  mechanical extraction pass (markers instead of per-row judgement,
+  mechanical class) and a targeted marker-judgement pass. Do NOT brief
+  a takeover as an authoring task - that is what produces the
+  deliberation. Enforce the per-element time-box and the 50 %
+  progress checkpoint.
 - **Main stays green (discipline since 2026-09-12):** after every push to
   main, check `gh run list`. A red main stops all new units until fixed -
   brief no new unit onto a red main; the fix becomes the critical path.
