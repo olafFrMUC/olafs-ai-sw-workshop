@@ -67,9 +67,17 @@ class must run in its own window.
 | Class | Used for | Current candidates |
 |---|---|---|
 | **strong** | Truly critical judgements ONLY: gate-critical passes, complex concept judgement calls | Claude Sonnet 5 (Opus) - **cost warning (owner, 2026-09-25): > $100 in two days on routine strong-class work; Claude is excellent but expensive, so the class is deliberately narrow** |
-| **standard** | Coordinator, Product Manager, regular units, **builds with a hard mechanical done criterion (CI-equal)** | Kimi K3 (proven, cheap) |
+| **standard** | Coordinator, Product Manager, regular units, **builds with a hard mechanical done criterion (CI-equal)** | **Kimi K3.1-pro** (proven, cheap) |
 | **review/research (external)** | Independent reviews, research passes, impact analyses | Gemini 3.1 Pro (proven in 5 term-6 test balloons: caught a real arithmetic error 4 same-window passes missed; U1 review PASS) |
-| **mechanical** | Registrar, formatting, log/index processing, dry-runs | Kimi K3 or Claude Haiku; Scaleway Generative API models after the pilot (OpenAI-compatible endpoint - tool-calling quality must be proven first) |
+| **mechanical** | Registrar, formatting, log/index processing, dry-runs, **content-migration transfers** | **Kimi K3.1-pro** or Claude Haiku; Scaleway Generative API models after the pilot (OpenAI-compatible endpoint - tool-calling quality must be proven first) |
+
+**Kimi variant cost note (2026-11-01, price table):** `kimi-k3.1-pro`
+= $2.00 in / $10.00 out per MTok (cached input $0.20) - the CHEAPEST
+proven K3 variant and the default for standard+mechanical. `kimi-k3`
+costs $3.00/$15.00 (50 % more) with no quality advantage seen here -
+not the default. `kimi-k3.1-pro-highspeed` ($4.00/$20.00) only when
+latency actually matters (interactive gates, not batch transfers).
+Same 1M-token context window across the K3 series.
 
 **External models run via the owner relay (term-6 pattern):** Claude/Gemini
 windows cannot be spawned by the coordinator as sub-agents - the coordinator
